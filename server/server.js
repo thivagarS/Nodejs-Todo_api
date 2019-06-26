@@ -7,7 +7,7 @@ const {Todo} = require('./models/Todo');
 const {Users} = require('./models/Users');
 
 const app = express();
-
+const port = process.env.PORT || 8080;
 // Middleware Setup
 
 // For parsing JSON to Object send through request
@@ -51,6 +51,6 @@ app.get('/todo/:id', (req, res) => {
     }
 });
 
-app.listen(8080, () => {
-    console.log(`App started ... Listening on port 8080 `);
+app.listen(port, () => {
+    console.log(`App started ... Listening on port ${port} `);
 })
