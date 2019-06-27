@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const {ObjectID} = require('mongodb');
+const _ = require('lodash');
 
 const {mongoose} = require('./db/mongoose');
 const {Todo} = require('./models/Todo');
@@ -18,16 +19,16 @@ app.post('/todos', (req, res) => {
         text: req.body.text
     });
 
-    newTodo.save().then(doc => {
-        res.send(doc);
+    newTodo.save().then(todo => {
+        res.send(todo);
     }).catch (err => {
         res.status(400).send(err);
     })
 });
 
 app.get('/todos', (req, res) => {
-    Todo.find().then(doc => {
-        res.send({doc});
+    Todo.find().then(todos => {
+        res.send({todos});
     })
     .catch(err => {
         res.status(400).send(err);
@@ -39,11 +40,11 @@ app.get('/todo/:id', (req, res) => {
     if(!ObjectID.isValid(id))
         return res.status(404).send();
     else {
-        Todo.findById(id).then(doc => {
-            if(!doc)
+        Todo.findById(id).then(todo => {
+            if(!todo)
                 res.status(404).send();
             else
-                res.send({doc});
+                res.send({todo});
         })
         .catch(err => {
             res.status(400).send();
@@ -51,19 +52,43 @@ app.get('/todo/:id', (req, res) => {
     }
 });
 
-app.delete('/todo/:id', (res, req) => {
-    const id = res.params.id;
+app.delete('/todo/:id', (req, res) => {
+    const id = req.params.id;
     if(!ObjectID.isValid(id))
-        return req.status(404).send();
+        return res.status(404).send();
     else {
         Todo.findByIdAndRemove(id).then(todo => {
             if(!todo)
-                req.status(404).send();
+                res.status(404).send();
             else
-                req.status(200).send({todo});
+                res.status(200).send({todo});
         })
         .catch(err => {
-            req.status(400).send();
+            res.status(400).send();
+        })
+    }
+});
+
+app.patch('/todo/:id', (req, res) => {
+    const id = req.params.id;
+    // THis utility is used to pick the required value from the json file as user might send the object property which is not there 
+        // n like completed At value which is system generated.
+    const body = _.pick(req.body, ["text", "completed"]);
+    if(!ObjectID.isValid(id))
+        return res.status(404).send();
+    else {
+        if(_.isBoolean(body.completed) && body.completed) {
+            body.completedAt = new Date().getTime();
+        } else {
+            body.completedAt = null;
+            body.completed = false;
+        }
+        // new : true will return the update doc
+        Todo.findByIdAndUpdate(id, {$set: body}, {new: true}).then(todo => {
+            if(!todo)
+                res.status(404).send();
+            else
+                res.send({todo});
         })
     }
 });
