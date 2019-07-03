@@ -3,7 +3,8 @@ var env = process.env.NODE_ENV || "development";
 if(env === 'development' || env === 'test') {
     const configObject = require('./config.json');
     const processObject = configObject[env];
+
     Object.keys(processObject).forEach(key => {
-        process.env[Key] = processObject[key];
-    });
+        process.env[key] = processObject[key];
+    })
 }
